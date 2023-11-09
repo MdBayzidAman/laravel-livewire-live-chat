@@ -4,6 +4,8 @@ use App\Http\Controllers\Auth\oAuthController;
 use App\Http\Controllers\ProfileController;
 use App\Livewire\Chat;
 use App\Livewire\Component\Chatbox;
+use App\Services\smsProvider\nexmo;
+use App\Services\smsProvider\twilio;
 use Illuminate\Support\Facades\Route;
 use Stephenjude\PaymentGateway\Facades\PaymentGateway;
 use Stephenjude\PaymentGateway\Providers\Pay4meProvider;
@@ -20,6 +22,7 @@ use Stephenjude\PaymentGateway\Providers\Pay4meProvider;
 */
 
 Route::get('/', function () {
+    // nexmo::make();
     return view('welcome');
 });
 
@@ -34,10 +37,17 @@ Route::controller(oAuthController::class)->group(function () {
     Route::get('/o-auth/callback/{provider}', 'handleCallback')->name('auth.social.callback');
 });
 
+// Mobile verification
+Route::get('auth/mobile/verify', function () {
+    return 'verify page';
+})->middleware(['auth'])
+    ->name('mobile.verification.notice');
+
 // breeze
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'email.verified', 'mobile.verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -48,7 +58,7 @@ Route::middleware('auth')->group(function () {
 
 // ## Live wire live chat
 Route::prefix('/live-wire-chat')
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'email.verified'])
     ->group(function () {
 
         // liveWire chat home
@@ -61,7 +71,6 @@ Route::prefix('/live-wire-chat')
         Route::get('/{id}', function ($id) {
             return view('chat.livewire-chat.chat', compact('id'));
         })->name('wire.chat.box');
-
     });
 
 // ## payment gateway

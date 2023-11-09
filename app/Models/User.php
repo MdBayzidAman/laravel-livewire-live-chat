@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Traits\MobileVerification\MustVerifyMobile;
+use Fouladgar\MobileVerification\Contracts\MustVerifyMobile as IMustVerifyMobile;
+// use Fouladgar\MobileVerification\Concerns\MustVerifyMobile;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -9,9 +12,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, IMustVerifyMobile
 {
     use HasApiTokens, HasFactory, Notifiable;
+    use MustVerifyMobile;
 
     /**
      * The attributes that are mass assignable.
@@ -21,12 +25,14 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'name',
         'email',
+        'mobile',
         'avatar',
         'username',
         'provider',
         'provider_id',
         'provider_token',
         'email_verified_at',
+        'mobile_verified_at',
         'password',
     ];
 
@@ -47,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'phone_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
@@ -60,16 +67,17 @@ class User extends Authenticatable implements MustVerifyEmail
             $user->username = self::generateUsername($user->name);
         });
     }
-    
-    
+
+
     // Generate username
-    public static function generateUsername($username){
+    public static function generateUsername($username)
+    {
         if ($username === null) {
             $username = Str::lower(Str::random(8));
         }
 
         if (User::where('username', $username)->exists()) {
-            $newUsername = $username.Str::lower(Str::random(3));
+            $newUsername = $username . Str::lower(Str::random(3));
             $username = self::generateUsername($newUsername);
         }
         return $username;
